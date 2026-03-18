@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang='en'>
+<head>
+    <meta charset='utf-8'>
+    <title>Kisekae Web Emulator</title>
+    <link rel='stylesheet' href='boxedwine.css'>
+    <style>
+        body { background-color: #333; color: white; text-align: center; }
+        #canvas { background-color: black; border: 2px solid #555; margin: 20px auto; display: block; }
+    </style>
+</head>
+<body>
+    <h1>Kisekae Application (Boxedwine WASM)</h1>
+    <canvas id='canvas' oncontextmenu='event.preventDefault()'></canvas>
+    <div id='status'>Loading emulator...</div>
+
+    <script type='text/javascript'>
+        var Module = {
+            canvas: document.getElementById('canvas'),
+            statusElement: document.getElementById('status'),
+            arguments: ['-root', '/kisekae.zip'],
+            onRuntimeInitialized: function() {
+                console.log('Boxedwine Runtime Initialized');
+                Module.statusElement.innerHTML = 'Emulator Running';
+            }
+        };
+    </script>
+    <script async type='text/javascript' src='boxedwine.js'></script>
+    <script async type='text/javascript' src='boxedwine-shell.js'></script>
+</body>
+</html>
