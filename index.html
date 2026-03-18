@@ -2,71 +2,65 @@
 <html lang='en'>
 <head>
     <meta charset='utf-8'>
-    <title>Kisekae Web Emulator - Advanced Launcher</title>
+    <title>Kisekae Web Emulator - Fully Featured</title>
     <link rel='stylesheet' href='boxedwine.css'>
     <style>
-        body { background-color: #1a1a1a; color: #f0f0f0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 20px; text-align: center; }
-        h1 { margin-bottom: 10px; color: #ffffff; }
-        #canvas { background-color: #000; border: 2px solid #444; border-radius: 4px; display: block; margin: 20px auto; max-width: 95vw; box-shadow: 0 10px 30px rgba(0,0,0,0.7); }
-        #status-container { width: 80%; max-width: 800px; margin: 0 auto; }
-        #status { font-size: 1.1em; margin-bottom: 10px; color: #00ff00; height: 1.2em; }
-        #progress-container { width: 100%; background-color: #333; border-radius: 10px; height: 20px; margin-bottom: 20px; overflow: hidden; border: 1px solid #555; }
-        #progress-bar { width: 0%; height: 100%; background: linear-gradient(90deg, #4caf50, #81c784); transition: width 0.3s ease; }
-        .console-note { font-size: 0.8em; color: #888; margin-top: 10px; }
+        body { background-color: #1a1a1a; color: #f0f0f0; font-family: sans-serif; text-align: center; padding: 20px; }
+        #canvas { background-color: #000; border: 2px solid #555; display: block; margin: 20px auto; max-width: 95vw; }
+        #output { width: 80%; height: 150px; margin: 10px auto; background-color: #000; color: #0f0; font-family: monospace; padding: 10px; overflow-y: scroll; text-align: left; display: none; }
+        .controls { margin: 10px; }
+        #spinner { display: inline-block; width: 50px; height: 50px; border: 3px solid rgba(255,255,255,.3); border-radius: 50%; border-top-color: #fff; animation: spin 1s ease-in-out infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .hidden { display: none; }
     </style>
 </head>
 <body>
     <h1>Kisekae Web Application</h1>
-    
-    <div id='status-container'>
-        <div id='status'>Initializing WebAssembly...</div>
-        <div id='progress-container'>
-            <div id='progress-bar'></div>
-        </div>
+
+    <div id='loadStatus'>
+        <div id='status'>Loading WebAssembly...</div>
+        <progress id='progress' value='0' max='100' style='width: 300px;'></progress>
+        <div id='spinner'></div>
     </div>
 
     <canvas id='canvas' oncontextmenu='event.preventDefault()'></canvas>
-    <p class='console-note'>Open Browser Console (F12) for detailed execution logs.</p>
+
+    <div class='controls'>
+        <button id='startbtn'>Start Emulator</button>
+        <button id='uploadbtn' class='hidden'>Upload File</button>
+        <button id='downloadbtn' class='hidden'>Download File</button>
+        <label id='sound-checkbox'><input type='checkbox' id='soundToggle' checked> Enable Sound</label>
+        <button id='showConsole'>Toggle Console</button>
+    </div>
+
+    <div id='dropzone' style='border: 2px dashed #444; padding: 10px; margin: 10px auto; width: 80%;'>Drop files here to upload to virtual drive</div>
+    
+    <div id='items' class='hidden'></div>
+    <div id='tree' class='hidden'></div>
+    <div id='message'></div>
+    <div id='selectedItem' class='hidden'></div>
+
+    <!-- Hidden Modal Triggers for shell scripts -->
+    <a id='modalLink' class='hidden'></a>
+    <a id='modalLinkExe' class='hidden'></a>
+    <button id='openModalExeClick' class='hidden'></button>
+
+    <textarea id='output' rows='8'></textarea>
 
     <script type='text/javascript'>
-        var statusElement = document.getElementById('status');
-        var progressBar = document.getElementById('progress-bar');
-
         var Module = {
             canvas: document.getElementById('canvas'),
-            // 3. Configure Module for advanced filesystem and logging
             arguments: ['-root', '/kisekae.zip'],
-            print: function(text) {
-                if (arguments.length > 1) text = Array.prototype.slice.call(arguments).join(' ');
-                console.log('[WASM STDOUT]: ' + text);
-            },
-            printErr: function(text) {
-                if (arguments.length > 1) text = Array.prototype.slice.call(arguments).join(' ');
-                console.error('[WASM STDERR]: ' + text);
-            },
-            setStatus: function(text) {
-                if (!Module.setStatus.last) Module.setStatus.last = { time: Date.now(), text: '' };
-                if (text === Module.setStatus.last.text) return;
-                Module.setStatus.last.text = text;
-                statusElement.innerHTML = text;
-            },
-            monitorRunDependencies: function(left) {
-                this.totalDependencies = Math.max(this.totalDependencies || 0, left);
-                var progress = left ? Math.round((this.totalDependencies - left) / this.totalDependencies * 100) : 100;
-                progressBar.style.width = progress + '%';
-                if (progress === 100) {
-                    Module.setStatus('Ready to Start');
-                } else {
-                    Module.setStatus('Downloading Assets: ' + progress + '%');
-                }
-            },
+            print: function(text) { console.log(text); if (document.getElementById('output')) document.getElementById('output').value += text + '\n'; },
+            printErr: function(text) { console.error(text); if (document.getElementById('output')) document.getElementById('output').value += 'Error: ' + text + '\n'; },
             onRuntimeInitialized: function() {
-                console.log('Boxedwine Runtime successfully initialized.');
-                Module.setStatus('Emulator Running');
+                console.log('Boxedwine Runtime Initialized');
+                document.getElementById('status').innerHTML = 'Ready';
             }
         };
     </script>
-    <!-- 4. Reference local core scripts -->
+
+    <!-- Load scripts at the end -->
     <script async type='text/javascript' src='boxedwine.js'></script>
     <script async type='text/javascript' src='boxedwine-shell.js'></script>
 </body>
