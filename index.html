@@ -2,40 +2,71 @@
 <html lang='en'>
 <head>
     <meta charset='utf-8'>
-    <title>Kisekae Web Emulator</title>
+    <title>Kisekae Web Emulator - Advanced Launcher</title>
     <link rel='stylesheet' href='boxedwine.css'>
     <style>
-        body { background-color: #222; color: #eee; font-family: sans-serif; text-align: center; margin: 0; padding: 20px; }
-        #canvas { background-color: black; border: 3px solid #444; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.5); display: block; margin: 20px auto; max-width: 100%; }
-        #status { font-weight: bold; margin-top: 10px; color: #aaa; }
-        h1 { color: #fff; margin-bottom: 5px; }
+        body { background-color: #1a1a1a; color: #f0f0f0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 20px; text-align: center; }
+        h1 { margin-bottom: 10px; color: #ffffff; }
+        #canvas { background-color: #000; border: 2px solid #444; border-radius: 4px; display: block; margin: 20px auto; max-width: 95vw; box-shadow: 0 10px 30px rgba(0,0,0,0.7); }
+        #status-container { width: 80%; max-width: 800px; margin: 0 auto; }
+        #status { font-size: 1.1em; margin-bottom: 10px; color: #00ff00; height: 1.2em; }
+        #progress-container { width: 100%; background-color: #333; border-radius: 10px; height: 20px; margin-bottom: 20px; overflow: hidden; border: 1px solid #555; }
+        #progress-bar { width: 0%; height: 100%; background: linear-gradient(90deg, #4caf50, #81c784); transition: width 0.3s ease; }
+        .console-note { font-size: 0.8em; color: #888; margin-top: 10px; }
     </style>
 </head>
 <body>
-    <h1>Kisekae Web App</h1>
-    <div id='status'>Initializing Emulator...</div>
+    <h1>Kisekae Web Application</h1>
+    
+    <div id='status-container'>
+        <div id='status'>Initializing WebAssembly...</div>
+        <div id='progress-container'>
+            <div id='progress-bar'></div>
+        </div>
+    </div>
+
     <canvas id='canvas' oncontextmenu='event.preventDefault()'></canvas>
+    <p class='console-note'>Open Browser Console (F12) for detailed execution logs.</p>
 
     <script type='text/javascript'>
         var statusElement = document.getElementById('status');
+        var progressBar = document.getElementById('progress-bar');
+
         var Module = {
             canvas: document.getElementById('canvas'),
-            statusElement: statusElement,
-            // 3. Automate filesystem loading using -root /kisekae.zip
+            // 3. Configure Module for advanced filesystem and logging
             arguments: ['-root', '/kisekae.zip'],
-            print: function(text) { console.log(text); },
-            printErr: function(text) { console.error(text); },
+            print: function(text) {
+                if (arguments.length > 1) text = Array.prototype.slice.call(arguments).join(' ');
+                console.log('[WASM STDOUT]: ' + text);
+            },
+            printErr: function(text) {
+                if (arguments.length > 1) text = Array.prototype.slice.call(arguments).join(' ');
+                console.error('[WASM STDERR]: ' + text);
+            },
             setStatus: function(text) {
                 if (!Module.setStatus.last) Module.setStatus.last = { time: Date.now(), text: '' };
                 if (text === Module.setStatus.last.text) return;
-                Module.statusElement.innerHTML = text;
+                Module.setStatus.last.text = text;
+                statusElement.innerHTML = text;
+            },
+            monitorRunDependencies: function(left) {
+                this.totalDependencies = Math.max(this.totalDependencies || 0, left);
+                var progress = left ? Math.round((this.totalDependencies - left) / this.totalDependencies * 100) : 100;
+                progressBar.style.width = progress + '%';
+                if (progress === 100) {
+                    Module.setStatus('Ready to Start');
+                } else {
+                    Module.setStatus('Downloading Assets: ' + progress + '%');
+                }
             },
             onRuntimeInitialized: function() {
-                console.log('Boxedwine Runtime Initialized');
+                console.log('Boxedwine Runtime successfully initialized.');
                 Module.setStatus('Emulator Running');
             }
         };
     </script>
+    <!-- 4. Reference local core scripts -->
     <script async type='text/javascript' src='boxedwine.js'></script>
     <script async type='text/javascript' src='boxedwine-shell.js'></script>
 </body>
