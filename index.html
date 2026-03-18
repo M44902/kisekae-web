@@ -5,23 +5,34 @@
     <title>Kisekae Web Emulator</title>
     <link rel='stylesheet' href='boxedwine.css'>
     <style>
-        body { background-color: #333; color: white; text-align: center; }
-        #canvas { background-color: black; border: 2px solid #555; margin: 20px auto; display: block; }
+        body { background-color: #222; color: #eee; font-family: sans-serif; text-align: center; margin: 0; padding: 20px; }
+        #canvas { background-color: black; border: 3px solid #444; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.5); display: block; margin: 20px auto; max-width: 100%; }
+        #status { font-weight: bold; margin-top: 10px; color: #aaa; }
+        h1 { color: #fff; margin-bottom: 5px; }
     </style>
 </head>
 <body>
-    <h1>Kisekae Application (Boxedwine WASM)</h1>
+    <h1>Kisekae Web App</h1>
+    <div id='status'>Initializing Emulator...</div>
     <canvas id='canvas' oncontextmenu='event.preventDefault()'></canvas>
-    <div id='status'>Loading emulator...</div>
 
     <script type='text/javascript'>
+        var statusElement = document.getElementById('status');
         var Module = {
             canvas: document.getElementById('canvas'),
-            statusElement: document.getElementById('status'),
+            statusElement: statusElement,
+            // 3. Automate filesystem loading using -root /kisekae.zip
             arguments: ['-root', '/kisekae.zip'],
+            print: function(text) { console.log(text); },
+            printErr: function(text) { console.error(text); },
+            setStatus: function(text) {
+                if (!Module.setStatus.last) Module.setStatus.last = { time: Date.now(), text: '' };
+                if (text === Module.setStatus.last.text) return;
+                Module.statusElement.innerHTML = text;
+            },
             onRuntimeInitialized: function() {
                 console.log('Boxedwine Runtime Initialized');
-                Module.statusElement.innerHTML = 'Emulator Running';
+                Module.setStatus('Emulator Running');
             }
         };
     </script>
